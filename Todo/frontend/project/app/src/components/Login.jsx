@@ -3,32 +3,47 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  // Single state object to manage username, password, and message
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    message: '',
+  });
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const formData = new URLSearchParams();
-    formData.append('username', username);
-    formData.append('password', password);
+    const formDataObj = new URLSearchParams();
+    formDataObj.append('username', formData.username);
+    formDataObj.append('password', formData.password);
 
     try {
-      const response = await axios.post('http://localhost:8000/auth/token', formData, {
+      const response = await axios.post('http://localhost:8000/auth/token', formDataObj, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
 
       if (response.status === 200) {
-        setMessage('Login successful!');
+        setFormData({ ...formData, message: 'Login successful!' });
         localStorage.setItem('access_token', response.data.access_token);
       }
     } catch (error) {
-      setMessage('Error: ' + (error.response?.data?.detail || 'Login failed.'));
+      setFormData({
+        ...formData,
+        message: 'Error: ' + (error.response?.data?.detail || 'Login failed.'),
+      });
     }
+  };
+
+  // Generic input change handler
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
   const handleSignupRedirect = () => {
@@ -48,10 +63,11 @@ const Login = () => {
             <input
               type="text"
               id="username"
+              name="username" // Use name attribute to link with handleInputChange
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={formData.username}
+              onChange={handleInputChange} // Using the generic handler
               required
             />
           </div>
@@ -64,10 +80,11 @@ const Login = () => {
             <input
               type="password"
               id="password"
+              name="password" // Use name attribute to link with handleInputChange
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={handleInputChange} // Using the generic handler
               required
             />
           </div>
@@ -82,9 +99,9 @@ const Login = () => {
         </form>
 
         {/* Message Display */}
-        {message && (
-          <div className={`mt-4 text-center text-sm ${message.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
-            {message}
+        {formData.message && (
+          <div className={`mt-4 text-center text-sm ${formData.message.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
+            {formData.message}
           </div>
         )}
 

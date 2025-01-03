@@ -33,6 +33,7 @@ class TokenData(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
+    is_admin: bool = False  # Add a flag to check if the user is an admin
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -75,10 +76,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     return user
 
 
-@router.post("/register", response_model=Token, tags=["Auth"])
+@router.post("/register/admin", response_model=Token, tags=["Auth"])
 async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)):
     username = request.username
     password = request.password
+    is_admin = request.is_admin  # Get the is_admin flag from the request
 
     # Check if the username already exists
     result = await db.execute(select(User).where(User.username == username))
@@ -95,9 +97,12 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
     await db.commit()
     await db.refresh(new_user)
 
-    # Create an access token
-    access_token = create_access_token(data={"sub": new_user.username, "roles": []})
+    # Create an access token with the "admin" role if the user is an admin
+    roles = ["admin"] if is_admin else []
+    access_token = create_access_token(data={"sub": new_user.username, "roles": roles})
+
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.post("/token", response_model=Token, tags=["Auth"])
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
@@ -109,11 +114,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # Define the roles for the user (empty list in this case)
-    roles = []  # You can adjust this based on your application's needs
+    # Define roles for the user, assign "admin" role if the user is an admin
+    roles = ["admin"] if user.username == "admin" else []  # Adjust this logic based on your needs
 
     # Create an access token with the user's username and roles
     access_token = create_access_token(data={"sub": user.username, "roles": roles})
 
     return {"access_token": access_token, "token_type": "bearer"}
-

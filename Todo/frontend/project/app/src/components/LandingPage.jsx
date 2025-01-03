@@ -1,12 +1,16 @@
-// src/LandingPage.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
   const navigate = useNavigate();
 
-  const handleGetStartedClick = () => {
-    navigate('/login'); // Redirect to the login page
+
+  const handleLoginAsUserClick = () => {
+    navigate('/login/user'); // Redirect to login as a user page
+  };
+
+  const handleLoginAsAdminClick = () => {
+    navigate('/admin/login'); // Redirect to login as an admin page
   };
 
   return (
@@ -19,14 +23,24 @@ const LandingPage = () => {
         <p className="text-lg md:text-xl mb-6">
           Easily manage your tasks and boost your productivity.
         </p>
-        
-        {/* Call-to-Action Button */}
-        <button
-          onClick={handleGetStartedClick}
-          className="bg-yellow-500 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-yellow-600 transition duration-300"
-        >
-          Get Started
-        </button>
+
+       
+
+        {/* Login Buttons */}
+        <div className="flex space-x-4">
+          <button
+            onClick={handleLoginAsUserClick}
+            className="bg-green-500 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-green-600 transition duration-300"
+          >
+            Login as User
+          </button>
+          <button
+            onClick={handleLoginAsAdminClick}
+            className="bg-red-500 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-red-600 transition duration-300"
+          >
+            Login as Admin
+          </button>
+        </div>
       </header>
 
       {/* Features Section */}
@@ -35,7 +49,7 @@ const LandingPage = () => {
         <ul className="space-y-4">
           <li className="text-lg md:text-xl">✔ Simple and intuitive interface</li>
           <li className="text-lg md:text-xl">✔ Track tasks effortlessly</li>
-          <li className="text-lg md:text-xl">✔ Set deadlines and reminders</li>
+
           <li className="text-lg md:text-xl">✔ Stay focused and organized</li>
         </ul>
       </section>
