@@ -16,12 +16,6 @@ class TaskRead(BaseModel):
     description: Optional[str]
 
 
-
-@router.get("/", response_model=List[TaskRead], tags=["Task Management"])
-async def get_all_tasks(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    tasks = await db.execute(select(Task))
-    return tasks.scalars().all()
-
 @router.get("/{task_id}", response_model=TaskRead, tags=["Task Management"])
 async def get_task_by_id(task_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     task = await db.execute(select(Task).where(Task.id == task_id))

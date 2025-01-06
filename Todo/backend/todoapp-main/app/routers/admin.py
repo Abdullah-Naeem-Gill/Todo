@@ -17,9 +17,14 @@ class TaskCreate(BaseModel):
     title: constr(min_length=1, max_length=100) 
     description: Optional[constr(max_length=500)] = None
 
+class TaskRead(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
 
 
-@router.post("/", response_model=TaskResponse, tags=["Admin"])
+
+@router.post("/createTask", response_model=TaskResponse, tags=["Admin"])
 async def create_task(task_create: TaskCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
    
     new_task = Task(**task_create.dict())
@@ -28,6 +33,11 @@ async def create_task(task_create: TaskCreate, current_user: User = Depends(get_
     await db.refresh(new_task)
     return {"msg": "Task created", "task_id": new_task.id}
 
+
+@router.get("/getTasks", response_model=List[TaskRead], tags=["Task Management"])
+async def get_all_tasks(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    tasks = await db.execute(select(Task))
+    return tasks.scalars().all()
 
 @router.post("/assign-task", tags=["Admin"])
 async def assign_task(task_id: int, user_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -48,6 +58,20 @@ async def assign_task(task_id: int, user_id: int, current_user: User = Depends(g
     await db.refresh(task_assignment)
 
     return {"msg": "Task assigned successfully", "task_assignment_id": task_assignment.id}
+
+@router.delete("/delete-task/{task_id}", response_model=TaskResponse, tags=["Admin"])
+async def delete_task(task_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    task = await db.execute(select(Task).where(Task.id == task_id))
+    task = task.scalar_one_or_none()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    await db.delete(task)
+    await db.commit()
+    
+    return {"msg": "Task deleted successfully", "task_id": task_id}
+
 
 @router.delete("/unassign-task/{task_id}/{user_id}", tags=["Admin"])
 async def unassign_task(task_id: int, user_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

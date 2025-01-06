@@ -3,43 +3,45 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 import { loginAdmin } from './api'; // Import the loginAdmin function from api.js
 
 const AdminLogin = () => {
-  // Single state object to manage all form data (username, password, and message)
+  // State object to manage all form data (username, password, and message)
   const [formData, setFormData] = useState({
     username: '',
     password: '',
     message: ''
   });
-  
+
   const navigate = useNavigate(); // Initialize navigate hook
 
+  // Handle form field changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  // Handle login submission
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Call the loginAdmin function from api.js
+    // Call loginAdmin function from api.js
     const result = await loginAdmin(formData.username, formData.password);
 
-    // Handle the result from the loginAdmin function
+    setFormData(prevState => ({
+      ...prevState,
+      message: result.message
+    }));
+
+    // If login is successful, redirect to admin dashboard
     if (result.success) {
-      setFormData({ ...formData, message: result.message });
-      setTimeout(() => {
-        navigate('/admin/dashboard'); // Redirect to admin dashboard after success
-      }, 2000); // Add a delay to show the success message before redirecting
-    } else {
-      setFormData({ ...formData, message: result.message });
+      setTimeout(() => navigate('/admin/dashboard'), 2000); // Delay to show success message
     }
   };
 
+  // Handle redirect to sign-up page
   const handleSignUpClick = () => {
     navigate('/admin/signup'); // Navigate to Admin Sign Up page
-  };
-
-  // Generic change handler for all form fields
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
   };
 
   return (
@@ -52,7 +54,7 @@ const AdminLogin = () => {
             <input
               type="text"
               id="username"
-              name="username" // Use name attribute for the generic handler
+              name="username" // Using name attribute for the generic handler
               placeholder="Enter your username"
               value={formData.username}
               onChange={handleInputChange} // Using the generic handler
@@ -65,7 +67,7 @@ const AdminLogin = () => {
             <input
               type="password"
               id="password"
-              name="password" // Use name attribute for the generic handler
+              name="password" // Using name attribute for the generic handler
               placeholder="Enter your password"
               value={formData.password}
               onChange={handleInputChange} // Using the generic handler
@@ -80,17 +82,16 @@ const AdminLogin = () => {
             Log In
           </button>
         </form>
+
+        {/* Display success or error message */}
         {formData.message && (
-          <p
-            className={`mt-4 text-center text-sm ${formData.message.includes('successful') ? 'text-green-500' : 'text-red-500'}`}
-          >
+          <p className={`mt-4 text-center text-sm ${formData.message.includes('successful') ? 'text-green-500' : 'text-red-500'}`}>
             {formData.message}
           </p>
         )}
 
-        {/* Enhanced "Don't have an Account?" Text */}
         <p className="text-gray-600 text-sm text-center mt-6">
-          Don't have an Account?{' '}
+          Don't have an account?{' '}
           <span
             onClick={handleSignUpClick}
             className="text-indigo-600 cursor-pointer hover:text-indigo-700 transition duration-300"
@@ -98,16 +99,6 @@ const AdminLogin = () => {
             Sign up here
           </span>
         </p>
-
-        {/* Sign Up Button */}
-        <div className="mt-4 text-center">
-          <button
-            onClick={handleSignUpClick}
-            className="w-full bg-green-500 text-white py-3 rounded-md hover:bg-green-600 transition duration-200"
-          >
-            Sign Up
-          </button>
-        </div>
       </div>
     </div>
   );
