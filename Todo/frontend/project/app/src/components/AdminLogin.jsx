@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 import { loginAdmin } from './api'; // Import the loginAdmin function from api.js
 
 const AdminLogin = () => {
-  // State object to manage all form data (username, password, and message)
+  // Use a single state object to manage all form data
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -21,7 +21,7 @@ const AdminLogin = () => {
     }));
   };
 
-  // Handle login submission
+  // Handle login submission with improved error handling
   const handleLogin = async (e) => {
     e.preventDefault();
 

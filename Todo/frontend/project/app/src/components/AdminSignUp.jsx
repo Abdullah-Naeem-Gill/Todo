@@ -3,29 +3,30 @@ import { useNavigate } from "react-router-dom"; // Import useNavigate hook
 import { signupAdmin } from "./api"; // Import the signupAdmin function from api.js
 
 const AdminSignUp = () => {
-  // Single state object to manage username, password, and message
+  // Single state object to manage username, password, message, and loading state
   const [formData, setFormData] = useState({
     username: "",
     password: "",
     message: "",
   });
-
+  const [isLoading, setIsLoading] = useState(false); // Loading state
   const navigate = useNavigate(); // Initialize navigate hook
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setIsLoading(true); // Set loading to true when the signup process starts
 
     // Call the signupAdmin function from api.js
     const result = await signupAdmin(formData.username, formData.password);
 
     // Handle the result from the signupAdmin function
+    setIsLoading(false); // Set loading to false once the request is complete
+    setFormData({ ...formData, message: result.message });
+
     if (result.success) {
-      setFormData({ ...formData, message: result.message });
       setTimeout(() => {
         navigate("/admin/login"); // Redirect to admin login after success
       }, 2000); // Add a delay to show the success message before redirecting
-    } else {
-      setFormData({ ...formData, message: result.message });
     }
   };
 
@@ -78,14 +79,21 @@ const AdminSignUp = () => {
           <button
             type="submit"
             className="w-full bg-indigo-600 text-white p-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 ease-in-out"
+            disabled={isLoading} // Disable button during loading
           >
-            Sign Up
+            {isLoading ? (
+              <span>Loading...</span> // Show loading text during request
+            ) : (
+              "Sign Up"
+            )}
           </button>
         </form>
         {formData.message && (
           <p
             className={`mt-4 text-center text-sm ${
-              formData.message.includes("successful") ? "text-green-500" : "text-red-500"
+              formData.message.includes("successful")
+                ? "text-green-500"
+                : "text-red-500"
             }`}
           >
             {formData.message}

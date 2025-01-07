@@ -4,17 +4,19 @@ import { useNavigate } from 'react-router-dom';
 const LandingPage = () => {
   const navigate = useNavigate();
 
-
+  // Handler for the "Login as User" button
   const handleLoginAsUserClick = () => {
-    navigate('/login/user'); // Redirect to login as a user page
+    navigate('/login/user'); // Redirect to the login as user page
   };
 
+  // Handler for the "Login as Admin" button
   const handleLoginAsAdminClick = () => {
-    navigate('/admin/login'); // Redirect to login as an admin page
+    navigate('/admin/login'); // Redirect to the login as admin page
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-500 to-indigo-600 flex flex-col justify-between items-center text-white p-6">
+
       {/* Header Section */}
       <header className="flex flex-col items-center mt-20">
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
@@ -24,19 +26,17 @@ const LandingPage = () => {
           Easily manage your tasks and boost your productivity.
         </p>
 
-       
-
         {/* Login Buttons */}
         <div className="flex space-x-4">
           <button
             onClick={handleLoginAsUserClick}
-            className="bg-green-500 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-green-600 transition duration-300"
+            className="bg-green-500 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-green-600 transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-600"
           >
             Login as User
           </button>
           <button
             onClick={handleLoginAsAdminClick}
-            className="bg-red-500 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-red-600 transition duration-300"
+            className="bg-red-500 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-600"
           >
             Login as Admin
           </button>
@@ -49,7 +49,6 @@ const LandingPage = () => {
         <ul className="space-y-4">
           <li className="text-lg md:text-xl">✔ Simple and intuitive interface</li>
           <li className="text-lg md:text-xl">✔ Track tasks effortlessly</li>
-
           <li className="text-lg md:text-xl">✔ Stay focused and organized</li>
         </ul>
       </section>

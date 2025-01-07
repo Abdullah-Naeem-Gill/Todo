@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { loginUser } from './api'; // Import the loginUser function from api.js
 
 const Login = () => {
   // Single state object to manage username, password, and message
@@ -11,29 +11,20 @@ const Login = () => {
   });
   const navigate = useNavigate();
 
+  // Handle login with the imported loginUser function
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const formDataObj = new URLSearchParams();
-    formDataObj.append('username', formData.username);
-    formDataObj.append('password', formData.password);
+    const { username, password } = formData;
 
-    try {
-      const response = await axios.post('http://localhost:8000/auth/token', formDataObj, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
+    // Use the loginUser function from api.js
+    const result = await loginUser(username, password);
 
-      if (response.status === 200) {
-        setFormData({ ...formData, message: 'Login successful!' });
-        localStorage.setItem('access_token', response.data.access_token);
-      }
-    } catch (error) {
-      setFormData({
-        ...formData,
-        message: 'Error: ' + (error.response?.data?.detail || 'Login failed.'),
-      });
+    if (result.success) {
+      setFormData({ ...formData, message: 'Login successful!' });
+      localStorage.setItem('access_token', result.data.access_token);
+    } else {
+      setFormData({ ...formData, message: `Error: ${result.message}` });
     }
   };
 
@@ -46,6 +37,7 @@ const Login = () => {
     });
   };
 
+  // Redirect to signup page
   const handleSignupRedirect = () => {
     navigate('/signup');
   };

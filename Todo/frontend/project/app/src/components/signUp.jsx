@@ -3,25 +3,42 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 import { signupUser } from './api'; // Import the signupUser function from api.js
 
 const SignUp = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  // Use a single state object to manage form data and message
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    message: '',
+  });
+
   const navigate = useNavigate(); // Initialize navigate hook
 
+  // Handle input change for form fields
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  // Handle signup form submission
   const handleSignup = async (e) => {
     e.preventDefault();
 
     // Call the signupUser function from api.js
-    const result = await signupUser(username, password);
+    const result = await signupUser(formData.username, formData.password);
 
     // Handle the result from the signupUser function
+    setFormData({
+      ...formData,
+      message: result.message,
+    });
+
+    // If signup is successful, redirect to login page after a short delay
     if (result.success) {
-      setMessage(result.message);
       setTimeout(() => {
-        navigate('/login'); // Redirect to login after success
-      }, 2000); // Add a delay to show the success message before redirecting
-    } else {
-      setMessage(result.message);
+        navigate('/login/user');
+      }, 2000);
     }
   };
 
@@ -35,9 +52,10 @@ const SignUp = () => {
             <input
               type="text"
               id="username"
+              name="username" // Use name attribute for generic handler
               placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={formData.username}
+              onChange={handleInputChange} // Using the generic handler
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
@@ -47,9 +65,10 @@ const SignUp = () => {
             <input
               type="password"
               id="password"
+              name="password" // Use name attribute for generic handler
               placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={handleInputChange} // Using the generic handler
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
@@ -61,11 +80,13 @@ const SignUp = () => {
             Sign Up
           </button>
         </form>
-        {message && (
+
+        {/* Display success or error message */}
+        {formData.message && (
           <p
-            className={`mt-4 text-center text-sm ${message.includes('successful') ? 'text-green-500' : 'text-red-500'}`}
+            className={`mt-4 text-center text-sm ${formData.message.includes('Error') ? 'text-red-500' : 'text-green-500'}`}
           >
-            {message}
+            {formData.message}
           </p>
         )}
       </div>

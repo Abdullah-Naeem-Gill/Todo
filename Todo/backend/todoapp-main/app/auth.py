@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from models import User
@@ -19,30 +19,30 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
-
+# Pydantic models for request and response
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-
 class TokenData(BaseModel):
     username: str
     roles: List[str]
-
 
 class RegisterRequest(BaseModel):
     username: str
     password: str
     is_admin: bool = False  # Add a flag to check if the user is an admin
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
+# Helper functions for password and JWT handling
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
-
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy()
@@ -53,7 +53,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
+# Get current user from token
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
         status_code=401,
@@ -75,7 +75,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         raise credentials_exception
     return user
 
-
+# Register new user (including admin)
 @router.post("/register/admin", response_model=Token, tags=["Auth"])
 async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)):
     username = request.username
@@ -103,15 +103,15 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
 
     return {"access_token": access_token, "token_type": "bearer"}
 
-
+# Login endpoint for users (now accepts JSON input)
 @router.post("/token", response_model=Token, tags=["Auth"])
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
     # Retrieve the user by username
-    result = await db.execute(select(User).where(User.username == form_data.username))
+    result = await db.execute(select(User).where(User.username == request.username))
     user = result.scalar_one_or_none()
 
     # If the user does not exist or the password is incorrect, raise an exception
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     # Define roles for the user, assign "admin" role if the user is an admin

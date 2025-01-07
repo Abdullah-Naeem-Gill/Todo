@@ -1,9 +1,10 @@
 import axios from "axios";
 
 // Base URL for your backend API
-const API_URL = "http://localhost:8000/user";
-const API_Auth = "http://localhost:8000/auth";
-const API_Admin = "http://localhost:8000/admin";
+const API_BASE_URL = "http://localhost:8000";
+const API_URL = `${API_BASE_URL}/user`;
+const API_AUTH = `${API_BASE_URL}/auth`;
+const API_ADMIN = `${API_BASE_URL}/admin`;
 
 // Utility function for handling API requests
 const handleApiRequest = async (url, method, formData, headers = {}) => {
@@ -12,50 +13,56 @@ const handleApiRequest = async (url, method, formData, headers = {}) => {
       method,
       url,
       data: formData,
-      headers: { "Content-Type": "application/x-www-form-urlencoded", ...headers },
+      headers: { "Content-Type": "application/json", ...headers },
     });
 
     if (response.status === 200) {
       return { success: true, data: response.data };
     } else {
-      return { success: false, message: "Unexpected response status." };
+      return { success: false, message: `Unexpected response status: ${response.status}` };
     }
   } catch (error) {
-    // Improve error handling
-    let errorMessage = "An unknown error occurred.";
-    if (error.response) {
-      // Server responded with a non-2xx status code
-      if (error.response.data) {
-        // Extract the error message from the response body
-        errorMessage = JSON.stringify(error.response.data);
-      } else {
-        // If response does not contain a body, use status text
-        errorMessage = error.response.statusText || "Server error.";
-      }
-    } else if (error.request) {
-      // Request was made but no response received
-      errorMessage = "No response received from server.";
-    } else {
-      // Something happened in setting up the request
-      errorMessage = error.message;
-    }
-    
-    return { success: false, message: `Error: ${errorMessage}` };
+    return formatError(error);
   }
+};
+
+// Centralized error formatting function
+const formatError = (error) => {
+  let errorMessage = "An unknown error occurred.";
+  
+  if (error.response) {
+    // Server responded with a non-2xx status code
+    errorMessage = error.response.data ? JSON.stringify(error.response.data) : error.response.statusText || "Server error.";
+  } else if (error.request) {
+    // Request was made but no response received
+    errorMessage = "No response received from server.";
+  } else {
+    // Something happened in setting up the request
+    errorMessage = error.message;
+  }
+
+  return { success: false, message: `Error: ${errorMessage}` };
+};
+
+// Centralized function for managing token retrieval
+const getAuthToken = () => {
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    throw new Error("No access token found, please log in first.");
+  }
+  return token;
 };
 
 // Function to handle login API request for a user
 export const loginUser = async (username, password) => {
-  const formData = new URLSearchParams();
-  formData.append("username", username);
-  formData.append("password", password);
+  const formData = { username, password };
 
   const result = await handleApiRequest(`${API_URL}/login/user`, "POST", formData);
 
   if (result.success) {
-    // Store the access token in localStorage
     localStorage.setItem("access_token", result.data.access_token);
   }
+
   return result;
 };
 
@@ -66,9 +73,9 @@ export const signupUser = async (username, password) => {
   const result = await handleApiRequest(`${API_URL}/register`, "POST", formData);
 
   if (result.success) {
-    // Store the access token in localStorage
     localStorage.setItem("access_token", result.data.access_token);
   }
+
   return result;
 };
 
@@ -76,94 +83,60 @@ export const signupUser = async (username, password) => {
 export const signupAdmin = async (username, password) => {
   const formData = { username, password };
 
-  const result = await handleApiRequest(`${API_Auth}/register/admin`, "POST", formData);
+  const result = await handleApiRequest(`${API_AUTH}/register/admin`, "POST", formData);
 
   if (result.success) {
-    // Store the access token in localStorage
     localStorage.setItem("access_token", result.data.access_token);
   }
+
   return result;
 };
 
 // Function to handle login API request for an admin
 export const loginAdmin = async (username, password) => {
-  const formData = new URLSearchParams();
-  formData.append("username", username);
-  formData.append("password", password);
+  const formData = { username, password };
 
-  const result = await handleApiRequest(`${API_Auth}/token`, "POST", formData);
+  const result = await handleApiRequest(`${API_AUTH}/token`, "POST", formData); // Updated to reflect admin login route
 
   if (result.success) {
-    // Store the access token in localStorage
     localStorage.setItem("access_token", result.data.access_token);
   }
+
   return result;
 };
 
 // Function to handle task creation by admin
 export const CreateTask = async (title, description) => {
-  const formData = {
-    title: title,
-    description: description
-  };
-
-  const token = localStorage.getItem("access_token");
-
-  // Debugging: Log the token to see if it's stored correctly
-  console.log("Token retrieved:", token);
-
-  if (!token) {
-    return { success: false, message: "No access token found, please log in first." };
-  }
+  const formData = { title, description };
 
   try {
-    // Send the request with JSON format
+    const token = getAuthToken();
     const response = await axios.post(
-      `${API_Admin}/createTask`,
-      formData, // Send as JSON
+      `${API_ADMIN}/createTask`,  // Adjusted path for task creation
+      formData,
       {
         headers: {
-          "Content-Type": "application/json",  // Correct content type for JSON
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       }
     );
 
     if (response.status === 200) {
-      // Successfully created the task
       return { success: true, message: "Task created successfully!" };
     } else {
       return { success: false, message: "Unexpected response status." };
     }
   } catch (error) {
-    // Handle and return the error message properly
-    let errorMessage = "An unknown error occurred.";
-    if (error.response) {
-      if (error.response.data) {
-        errorMessage = JSON.stringify(error.response.data);
-      } else {
-        errorMessage = error.response.statusText || "Server error.";
-      }
-    } else if (error.request) {
-      errorMessage = "No response received from server.";
-    } else {
-      errorMessage = error.message;
-    }
-    return { success: false, message: `Error: ${errorMessage}` };
+    return formatError(error);
   }
 };
 
-
-
+// Function to get all tasks for admin
 export const GetAllTasks = async () => {
-  const token = localStorage.getItem("access_token");
-
-  if (!token) {
-    return { success: false, message: "No access token found, please log in first." };
-  }
-
   try {
-    const response = await axios.get(`${API_Admin}/getTasks`, {
+    const token = getAuthToken();
+    const response = await axios.get(`${API_ADMIN}/getTasks`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -171,24 +144,11 @@ export const GetAllTasks = async () => {
     });
 
     if (response.status === 200) {
-      return { success: true, tasks: response.data }; // Directly use response.data as the tasks array
+      return { success: true, tasks: response.data }; 
     } else {
       return { success: false, message: "Unexpected response status." };
     }
   } catch (error) {
-    let errorMessage = "An unknown error occurred.";
-    if (error.response) {
-      if (error.response.data) {
-        errorMessage = JSON.stringify(error.response.data);
-      } else {
-        errorMessage = error.response.statusText || "Server error.";
-      }
-    } else if (error.request) {
-      errorMessage = "No response received from server.";
-    } else {
-      errorMessage = error.message;
-    }
-    return { success: false, message: `Error: ${errorMessage}` };
+    return formatError(error);
   }
 };
-
