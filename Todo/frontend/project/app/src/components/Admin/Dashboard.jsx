@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { CreateTask, GetAllTasks } from "../components/api"; // Import CreateTask and GetAllTasks
+import {
+  CreateTask,
+  GetAllTasks,
+  DeleteTask,
+  UpdateTask,
+} from "../../utilities/api";
 
 const AdminDashboard = () => {
   const [formData, setFormData] = useState({
@@ -8,16 +13,39 @@ const AdminDashboard = () => {
     message: "",
   });
 
-  const [tasks, setTasks] = useState([]); // Store fetched tasks
-  const [loading, setLoading] = useState(false); // Loading state for fetching tasks
-  const [visibleTaskCount, setVisibleTaskCount] = useState(5); // Track visible task count for pagination
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [visibleTaskCount, setVisibleTaskCount] = useState(5);
+  const [editingTaskId, setEditingTaskId] = useState(null);
 
   const ADD_TASK_BUTTON_TEXT = "Add Task";
-  const SEE_ALL_TASKS_BUTTON_TEXT = "See all tasks";
   const SEE_MORE_BUTTON_TEXT = "See More";
   const SEE_LESS_BUTTON_TEXT = "See Less";
 
-  // Handle form data change for task creation
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      try {
+        const response = await GetAllTasks();
+        if (response.success) {
+          setTasks(response.tasks);
+        } else {
+          setTasks([]);
+        }
+      } catch (error) {
+        setTasks([]);
+        setFormData((prevState) => ({
+          ...prevState,
+          message: "An error occurred while fetching tasks.",
+        }));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
@@ -26,23 +54,21 @@ const AdminDashboard = () => {
     }));
   };
 
-  // Handle task form submission (creating a new task)
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const { title, description } = formData;
 
     try {
-      // Call the API to create the task
-      const response = await CreateTask(title, description);
-
-      setFormData((prevState) => ({
-        ...prevState,
-        message: response.message,
-      }));
-
-      // Reset form if successful
-      if (response.success) {
+      if (editingTaskId) {
+        const response = await UpdateTask(editingTaskId, title, description);
+        setEditingTaskId(null);
+        setFormData({
+          title: "",
+          description: "",
+          message: response.message,
+        });
+      } else {
+        const response = await CreateTask(title, description);
         setFormData({
           title: "",
           description: "",
@@ -52,40 +78,43 @@ const AdminDashboard = () => {
     } catch (error) {
       setFormData((prevState) => ({
         ...prevState,
-        message: "An error occurred while creating the task.",
+        message: "An error occurred while processing the task.",
       }));
     }
   };
 
-  // Fetch all tasks when the component mounts or when triggered
-  const handleGetAllTasks = async () => {
-    setLoading(true);
-
+  const handleDeleteTask = async (taskId) => {
     try {
-      const response = await GetAllTasks();
+      const response = await DeleteTask(taskId);
       if (response.success) {
-        setTasks(response.tasks);
+        setTasks(tasks.filter((task) => task.id !== taskId));
       } else {
-        setTasks([]); // Handle if no tasks are returned
+        setFormData((prevState) => ({
+          ...prevState,
+          message: "An error occurred while deleting the task.",
+        }));
       }
     } catch (error) {
-      setTasks([]); // In case of error, clear tasks
       setFormData((prevState) => ({
         ...prevState,
-        message: "An error occurred while fetching tasks.",
+        message: "An error occurred while deleting the task.",
       }));
-    } finally {
-      setLoading(false); // Set loading to false after request completes
     }
   };
 
-  // Toggle to show all tasks (See More)
+  const handleEditTask = (task) => {
+    setEditingTaskId(task.id);
+    setFormData({
+      title: task.title,
+      description: task.description,
+      message: "",
+    });
+  };
+
   const handleSeeMore = () => setVisibleTaskCount(tasks.length);
 
-  // Toggle to show fewer tasks (See Less)
   const handleSeeLess = () => setVisibleTaskCount(5);
 
-  // Render tasks list with pagination (See More / See Less buttons)
   const renderTasks = () => {
     if (tasks.length === 0) return <p>No tasks available.</p>;
 
@@ -98,21 +127,33 @@ const AdminDashboard = () => {
           >
             <span>{task.title}</span>
             <span className="text-gray-500">ID: {task.id}</span>
+
+            <button
+              onClick={() => handleEditTask(task)}
+              className="text-blue-500"
+            >
+              Edit
+            </button>
+
+            <button
+              onClick={() => handleDeleteTask(task.id)}
+              className="text-red-500"
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
     );
   };
 
-  // Render the component
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">
         <h1 className="text-2xl font-semibold text-center text-gray-700 mb-6">
-          Create a New Task
+          {editingTaskId ? "Update Task" : "Create a New Task"}
         </h1>
 
-        {/* Task creation form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <label htmlFor="title" className="block text-gray-600 font-medium">
             Title
@@ -128,7 +169,10 @@ const AdminDashboard = () => {
             required
           />
 
-          <label htmlFor="description" className="block text-gray-600 font-medium">
+          <label
+            htmlFor="description"
+            className="block text-gray-600 font-medium"
+          >
             Description
           </label>
           <textarea
@@ -141,10 +185,13 @@ const AdminDashboard = () => {
             className="w-full p-3 border border-gray-300 rounded-md"
           />
 
-          {/* Message display */}
           {formData.message && (
             <p
-              className={`text-center mt-4 ${formData.message.includes("successful") ? "text-green-500" : "text-red-500"}`}
+              className={`text-center mt-4 ${
+                formData.message.includes("successful")
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
             >
               {formData.message}
             </p>
@@ -154,19 +201,10 @@ const AdminDashboard = () => {
             type="submit"
             className="text-white bg-blue-500 rounded-lg h-10 w-full"
           >
-            {ADD_TASK_BUTTON_TEXT}
+            {editingTaskId ? "Update Task" : ADD_TASK_BUTTON_TEXT}
           </button>
         </form>
 
-        {/* Button to fetch all tasks */}
-        <button
-          onClick={handleGetAllTasks}
-          className="text-white bg-green-500 rounded-lg h-10 w-full mt-5"
-        >
-          {SEE_ALL_TASKS_BUTTON_TEXT}
-        </button>
-
-        {/* Render tasks or loading message */}
         {loading ? (
           <p className="text-center mt-4">Loading tasks...</p>
         ) : (
@@ -174,7 +212,6 @@ const AdminDashboard = () => {
             <h2 className="text-lg font-semibold text-gray-700 mb-4">Tasks</h2>
             {renderTasks()}
 
-            {/* See More / See Less buttons */}
             {tasks.length > visibleTaskCount && (
               <button
                 onClick={handleSeeMore}

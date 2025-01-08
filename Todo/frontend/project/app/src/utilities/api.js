@@ -1,12 +1,10 @@
 import axios from "axios";
 
-// Base URL for your backend API
 const API_BASE_URL = "http://localhost:8000";
 const API_URL = `${API_BASE_URL}/user`;
 const API_AUTH = `${API_BASE_URL}/auth`;
 const API_ADMIN = `${API_BASE_URL}/admin`;
 
-// Utility function for handling API requests
 const handleApiRequest = async (url, method, formData, headers = {}) => {
   try {
     const response = await axios({
@@ -19,32 +17,32 @@ const handleApiRequest = async (url, method, formData, headers = {}) => {
     if (response.status === 200) {
       return { success: true, data: response.data };
     } else {
-      return { success: false, message: `Unexpected response status: ${response.status}` };
+      return {
+        success: false,
+        message: `Unexpected response status: ${response.status}`,
+      };
     }
   } catch (error) {
     return formatError(error);
   }
 };
 
-// Centralized error formatting function
 const formatError = (error) => {
   let errorMessage = "An unknown error occurred.";
-  
+
   if (error.response) {
-    // Server responded with a non-2xx status code
-    errorMessage = error.response.data ? JSON.stringify(error.response.data) : error.response.statusText || "Server error.";
+    errorMessage = error.response.data
+      ? JSON.stringify(error.response.data)
+      : error.response.statusText || "Server error.";
   } else if (error.request) {
-    // Request was made but no response received
     errorMessage = "No response received from server.";
   } else {
-    // Something happened in setting up the request
     errorMessage = error.message;
   }
 
   return { success: false, message: `Error: ${errorMessage}` };
 };
 
-// Centralized function for managing token retrieval
 const getAuthToken = () => {
   const token = localStorage.getItem("access_token");
   if (!token) {
@@ -53,11 +51,14 @@ const getAuthToken = () => {
   return token;
 };
 
-// Function to handle login API request for a user
 export const loginUser = async (username, password) => {
   const formData = { username, password };
 
-  const result = await handleApiRequest(`${API_URL}/login/user`, "POST", formData);
+  const result = await handleApiRequest(
+    `${API_URL}/login/user`,
+    "POST",
+    formData
+  );
 
   if (result.success) {
     localStorage.setItem("access_token", result.data.access_token);
@@ -66,11 +67,14 @@ export const loginUser = async (username, password) => {
   return result;
 };
 
-// Function to handle signup API request for a user
 export const signupUser = async (username, password) => {
   const formData = { username, password };
 
-  const result = await handleApiRequest(`${API_URL}/register`, "POST", formData);
+  const result = await handleApiRequest(
+    `${API_URL}/register`,
+    "POST",
+    formData
+  );
 
   if (result.success) {
     localStorage.setItem("access_token", result.data.access_token);
@@ -79,11 +83,14 @@ export const signupUser = async (username, password) => {
   return result;
 };
 
-// Function to handle signup API request for an admin
 export const signupAdmin = async (username, password) => {
   const formData = { username, password };
 
-  const result = await handleApiRequest(`${API_AUTH}/register/admin`, "POST", formData);
+  const result = await handleApiRequest(
+    `${API_AUTH}/register/admin`,
+    "POST",
+    formData
+  );
 
   if (result.success) {
     localStorage.setItem("access_token", result.data.access_token);
@@ -92,11 +99,10 @@ export const signupAdmin = async (username, password) => {
   return result;
 };
 
-// Function to handle login API request for an admin
 export const loginAdmin = async (username, password) => {
   const formData = { username, password };
 
-  const result = await handleApiRequest(`${API_AUTH}/token`, "POST", formData); // Updated to reflect admin login route
+  const result = await handleApiRequest(`${API_AUTH}/token`, "POST", formData);
 
   if (result.success) {
     localStorage.setItem("access_token", result.data.access_token);
@@ -105,22 +111,17 @@ export const loginAdmin = async (username, password) => {
   return result;
 };
 
-// Function to handle task creation by admin
 export const CreateTask = async (title, description) => {
   const formData = { title, description };
 
   try {
     const token = getAuthToken();
-    const response = await axios.post(
-      `${API_ADMIN}/createTask`,  // Adjusted path for task creation
-      formData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.post(`${API_ADMIN}/createTask`, formData, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (response.status === 200) {
       return { success: true, message: "Task created successfully!" };
@@ -132,7 +133,6 @@ export const CreateTask = async (title, description) => {
   }
 };
 
-// Function to get all tasks for admin
 export const GetAllTasks = async () => {
   try {
     const token = getAuthToken();
@@ -144,7 +144,50 @@ export const GetAllTasks = async () => {
     });
 
     if (response.status === 200) {
-      return { success: true, tasks: response.data }; 
+      return { success: true, tasks: response.data };
+    } else {
+      return { success: false, message: "Unexpected response status." };
+    }
+  } catch (error) {
+    return formatError(error);
+  }
+};
+
+// New DeleteTask Functionality
+export const DeleteTask = async (taskId) => {
+  try {
+    const token = getAuthToken();
+    const response = await axios.delete(`${API_ADMIN}/delete-task/${taskId}`, {  // Use taskId here
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 200) {
+      return { success: true, message: "Task deleted successfully!" };
+    } else {
+      return { success: false, message: "Unexpected response status." };
+    }
+  } catch (error) {
+    return formatError(error);
+  }
+};
+
+export const UpdateTask = async (taskId, title, description) => {
+  const formData = { title, description };
+
+  try {
+    const token = getAuthToken();
+    const response = await axios.put(`${API_ADMIN}/update-task/${taskId}`, formData, {  // Use taskId to target the task
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 200) {
+      return { success: true, message: "Task updated successfully!" };
     } else {
       return { success: false, message: "Unexpected response status." };
     }

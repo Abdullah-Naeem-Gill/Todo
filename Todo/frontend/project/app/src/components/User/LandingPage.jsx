@@ -1,23 +1,19 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
   const navigate = useNavigate();
 
-  // Handler for the "Login as User" button
   const handleLoginAsUserClick = () => {
-    navigate('/login/user'); // Redirect to the login as user page
+    navigate("/login/user");
   };
 
-  // Handler for the "Login as Admin" button
   const handleLoginAsAdminClick = () => {
-    navigate('/admin/login'); // Redirect to the login as admin page
+    navigate("/admin/login");
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-500 to-indigo-600 flex flex-col justify-between items-center text-white p-6">
-
-      {/* Header Section */}
       <header className="flex flex-col items-center mt-20">
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
           Stay Organized with Our To-Do App
@@ -26,7 +22,6 @@ const LandingPage = () => {
           Easily manage your tasks and boost your productivity.
         </p>
 
-        {/* Login Buttons */}
         <div className="flex space-x-4">
           <button
             onClick={handleLoginAsUserClick}
@@ -43,17 +38,19 @@ const LandingPage = () => {
         </div>
       </header>
 
-      {/* Features Section */}
       <section className="mt-16 text-center">
-        <h2 className="text-2xl md:text-3xl font-semibold mb-6">Why Use Our To-Do App?</h2>
+        <h2 className="text-2xl md:text-3xl font-semibold mb-6">
+          Why Use Our To-Do App?
+        </h2>
         <ul className="space-y-4">
-          <li className="text-lg md:text-xl">✔ Simple and intuitive interface</li>
+          <li className="text-lg md:text-xl">
+            ✔ Simple and intuitive interface
+          </li>
           <li className="text-lg md:text-xl">✔ Track tasks effortlessly</li>
           <li className="text-lg md:text-xl">✔ Stay focused and organized</li>
         </ul>
       </section>
 
-      {/* Footer Section */}
       <footer className="text-center py-8">
         <p className="text-sm md:text-base">
           © 2025 ToDoApp. All rights reserved.

@@ -22,6 +22,9 @@ class TaskRead(BaseModel):
     title: str
     description: Optional[str]
 
+class UserRead(BaseModel):
+    id: int
+    username: str
 
 
 @router.post("/createTask", response_model=TaskResponse, tags=["Admin"])
@@ -86,7 +89,7 @@ async def unassign_task(task_id: int, user_id: int, current_user: User = Depends
     return {"msg": "Task unassigned successfully"}
 
 
-@router.put("/{task_id}", tags=["Admin"])
+@router.put("/update-task/{task_id}", tags=["Admin"])
 async def update_task(task_id: int, task_create: TaskCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     task = await db.execute(select(Task).where(Task.id == task_id))
     task = task.scalar_one_or_none()
@@ -98,3 +101,32 @@ async def update_task(task_id: int, task_create: TaskCreate, current_user: User 
     task.description = task_create.description
     await db.commit()
     return {"msg": "Task updated"}
+
+    
+@router.get("/users", response_model=List[UserRead], tags=["Admin"])
+async def get_all_users(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(User))
+    users = result.scalars().all()
+
+    user_read_list = [UserRead(id=user.id, username=user.username) for user in users]
+    return user_read_list
+
+@router.get("/users/{user_id}", response_model=UserRead, tags=["Admin"])
+async def get_user_by_id(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    user = await db.execute(select(User).where(User.id == user_id))
+    user = user.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+    
+    return {"id": user.id, "username": user.username}
