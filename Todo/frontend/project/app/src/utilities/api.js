@@ -1,47 +1,8 @@
+
+
 import axios from "axios";
-
-const API_BASE_URL = "http://localhost:8000";
-const API_URL = `${API_BASE_URL}/user`;
-const API_AUTH = `${API_BASE_URL}/auth`;
-const API_ADMIN = `${API_BASE_URL}/admin`;
-
-const handleApiRequest = async (url, method, formData, headers = {}) => {
-  try {
-    const response = await axios({
-      method,
-      url,
-      data: formData,
-      headers: { "Content-Type": "application/json", ...headers },
-    });
-
-    if (response.status === 200) {
-      return { success: true, data: response.data };
-    } else {
-      return {
-        success: false,
-        message: `Unexpected response status: ${response.status}`,
-      };
-    }
-  } catch (error) {
-    return formatError(error);
-  }
-};
-
-const formatError = (error) => {
-  let errorMessage = "An unknown error occurred.";
-
-  if (error.response) {
-    errorMessage = error.response.data
-      ? JSON.stringify(error.response.data)
-      : error.response.statusText || "Server error.";
-  } else if (error.request) {
-    errorMessage = "No response received from server.";
-  } else {
-    errorMessage = error.message;
-  }
-
-  return { success: false, message: `Error: ${errorMessage}` };
-};
+import { API_URL, API_AUTH, API_ADMIN } from "./Constants";
+import { handleApiRequest } from "./ApiHandling"; 
 
 const getAuthToken = () => {
   const token = localStorage.getItem("access_token");
@@ -153,11 +114,10 @@ export const GetAllTasks = async () => {
   }
 };
 
-// New DeleteTask Functionality
 export const DeleteTask = async (taskId) => {
   try {
     const token = getAuthToken();
-    const response = await axios.delete(`${API_ADMIN}/delete-task/${taskId}`, {  // Use taskId here
+    const response = await axios.delete(`${API_ADMIN}/delete-task/${taskId}`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -179,7 +139,7 @@ export const UpdateTask = async (taskId, title, description) => {
 
   try {
     const token = getAuthToken();
-    const response = await axios.put(`${API_ADMIN}/update-task/${taskId}`, formData, {  // Use taskId to target the task
+    const response = await axios.put(`${API_ADMIN}/update-task/${taskId}`, formData, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
