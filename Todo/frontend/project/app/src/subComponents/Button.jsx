@@ -1,15 +1,14 @@
-// Button.js
+
 import React from 'react';
 
 const Button = ({ color = 'blue', text, onClick, size = 'md', disabled = false }) => {
-  // Define the size classes based on the 'size' prop
+
   const sizeClasses = {
     sm: 'px-4 py-2 text-sm',
     md: 'px-6 py-3 text-base',
     lg: 'px-8 py-4 text-lg',
   };
 
-  // Define color classes based on the 'color' prop
   const colorClasses = {
     blue: 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500',
     red: 'bg-red-500 hover:bg-red-600 focus:ring-red-500',
@@ -17,8 +16,6 @@ const Button = ({ color = 'blue', text, onClick, size = 'md', disabled = false }
     yellow: 'bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500',
     indigo: 'bg-indigo-500 hover:bg-indigo-600 focus:ring-indigo-500',
   };
-
-  // Combine the classes and handle the disabled state
   const buttonClass = `${sizeClasses[size]} ${colorClasses[color]} text-white font-semibold rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
 
   return (

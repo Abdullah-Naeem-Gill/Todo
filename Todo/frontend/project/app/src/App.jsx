@@ -1,11 +1,12 @@
+
+
+
 import React from 'react'
-import Button from './subComponents/Button'
-import Footer from './SubComponents/Footer'
-import LandingPage from './components/LandingPage'
+import Login from './components/Auth/Login'
 const App = () => {
   return (
     <div>
-      <LandingPage />
+        <Login/>
   </div>
 
   )

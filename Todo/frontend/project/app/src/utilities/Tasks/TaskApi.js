@@ -1,8 +1,5 @@
-
-
 import axios from "axios";
-import { API_URL, API_AUTH, API_ADMIN } from "./Constants";
-import { handleApiRequest } from "./ApiHandling"; 
+import { API_ADMIN } from "./Constants";
 
 const getAuthToken = () => {
   const token = localStorage.getItem("access_token");
@@ -12,71 +9,11 @@ const getAuthToken = () => {
   return token;
 };
 
-export const loginUser = async (username, password) => {
-  const formData = { username, password };
-
-  const result = await handleApiRequest(
-    `${API_URL}/login/user`,
-    "POST",
-    formData
-  );
-
-  if (result.success) {
-    localStorage.setItem("access_token", result.data.access_token);
-  }
-
-  return result;
-};
-
-export const signupUser = async (username, password) => {
-  const formData = { username, password };
-
-  const result = await handleApiRequest(
-    `${API_URL}/register`,
-    "POST",
-    formData
-  );
-
-  if (result.success) {
-    localStorage.setItem("access_token", result.data.access_token);
-  }
-
-  return result;
-};
-
-export const signupAdmin = async (username, password) => {
-  const formData = { username, password };
-
-  const result = await handleApiRequest(
-    `${API_AUTH}/register/admin`,
-    "POST",
-    formData
-  );
-
-  if (result.success) {
-    localStorage.setItem("access_token", result.data.access_token);
-  }
-
-  return result;
-};
-
-export const loginAdmin = async (username, password) => {
-  const formData = { username, password };
-
-  const result = await handleApiRequest(`${API_AUTH}/token`, "POST", formData);
-
-  if (result.success) {
-    localStorage.setItem("access_token", result.data.access_token);
-  }
-
-  return result;
-};
-
 export const CreateTask = async (title, description) => {
   const formData = { title, description };
 
   try {
-    const token = getAuthToken();
+    const token = getAuthToken();  // Ensure token is retrieved
     const response = await axios.post(`${API_ADMIN}/createTask`, formData, {
       headers: {
         "Content-Type": "application/json",
@@ -96,7 +33,7 @@ export const CreateTask = async (title, description) => {
 
 export const GetAllTasks = async () => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken();  // Ensure token is retrieved
     const response = await axios.get(`${API_ADMIN}/getTasks`, {
       headers: {
         "Content-Type": "application/json",
@@ -116,7 +53,7 @@ export const GetAllTasks = async () => {
 
 export const DeleteTask = async (taskId) => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken();  // Ensure token is retrieved
     const response = await axios.delete(`${API_ADMIN}/delete-task/${taskId}`, {
       headers: {
         "Content-Type": "application/json",
@@ -138,7 +75,7 @@ export const UpdateTask = async (taskId, title, description) => {
   const formData = { title, description };
 
   try {
-    const token = getAuthToken();
+    const token = getAuthToken();  // Ensure token is retrieved
     const response = await axios.put(`${API_ADMIN}/update-task/${taskId}`, formData, {
       headers: {
         "Content-Type": "application/json",
@@ -153,5 +90,16 @@ export const UpdateTask = async (taskId, title, description) => {
     }
   } catch (error) {
     return formatError(error);
+  }
+};
+
+// Helper function to format errors
+const formatError = (error) => {
+  if (error.response) {
+    return { success: false, message: error.response.data.message || "An error occurred." };
+  } else if (error.request) {
+    return { success: false, message: "No response received from the server." };
+  } else {
+    return { success: false, message: error.message };
   }
 };
