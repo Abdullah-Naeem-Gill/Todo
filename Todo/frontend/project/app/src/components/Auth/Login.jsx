@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginAdmin  } from '../../utilities/Auth/LoginApi'; 
+import { loginAdmin } from '../../utilities/Auth/LoginApi';
 import Button from '../../subComponents/Button';
 
 const Login = () => {
@@ -13,12 +13,34 @@ const Login = () => {
     event.preventDefault();
     setFormData(prevState => ({ ...prevState, errorMessage: '' }));
 
-    const result = await loginAdmin(formData.username, formData.password);
+    try {
+      // Call the login API with username and password
+      const result = await loginAdmin(formData.username, formData.password);
 
-    if (result.success) {
-      window.location.href = '/dashboard';  
-    } else {
-      setFormData(prevState => ({ ...prevState, errorMessage: result.message || 'Login failed. Please try again.' }));
+      if (result.success) {
+        // Check if 'is_admin' exists in the result object
+        const isAdmin = result.is_admin; // assuming is_admin is returned
+
+        if (isAdmin) {
+          // If the user is an admin, redirect to the admin dashboard
+          window.location.href = '/admin-dashboard';
+        } else {
+          // If the user is not an admin, redirect to the user dashboard
+          window.location.href = '/user-dashboard';
+        }
+      } else {
+        // If login failed, show the message returned by the backend
+        setFormData(prevState => ({
+          ...prevState,
+          errorMessage: result.message || 'Login failed. Please try again.'
+        }));
+      }
+    } catch (error) {
+      // Handle unexpected errors (e.g., network errors)
+      setFormData(prevState => ({
+        ...prevState,
+        errorMessage: 'An error occurred. Please try again.'
+      }));
     }
   };
 
