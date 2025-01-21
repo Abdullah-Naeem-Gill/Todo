@@ -73,7 +73,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         raise credentials_exception
     return user
 
-@router.post("/register/admin", response_model=Token, tags=["Auth"])
+@router.post("/register", response_model=Token, tags=["Auth"])
 async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)):
     username = request.username
     password = request.password
@@ -107,7 +107,7 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
     if not user or not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # Assign role based on the username
+    # Fetch roles from the user data or predefined roles based on the username
     roles = ["admin"] if user.username == "admin" else ["user"]  # Default to "user" for non-admin users
 
     access_token = create_access_token(data={"sub": user.username, "roles": roles})
